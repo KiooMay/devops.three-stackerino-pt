@@ -305,25 +305,8 @@ Na tarefa do Teams, entrega:
 > [!TIP]
 > No Windows, `Win + Shift + S` tira um print de uma zona do ecrã.
 
-### ✅ Critérios de avaliação (20 valores)
-
-| #  | Critério                                                                                         | Valores |
-| -- | ------------------------------------------------------------------------------------------------ | ------- |
-| 1  | Fork no GitHub do aluno, público, com o link entregue no Teams                                   | 1       |
-| 2  | PostgreSQL a correr e tabela `mensagens` criada (print 1)                                        | 2       |
-| 3  | Backend a correr e ligado à BD: healthcheck com `"base_de_dados": "ok"` (print 2)                | 2       |
-| 4  | Frontend a correr, os 3 serviços integrados e 3 mensagens publicadas, uma com o nome do aluno (print 3) | 3 |
-| 5  | As mensagens da página estão na base de dados (print 4)                                          | 2       |
-| 6  | Diagnóstico: BD desligada mostra o erro certo (print 5)                                          | 2       |
-| 7  | Diagnóstico: backend desligado mostra o erro certo (print 6)                                     | 2       |
-| 8  | Desafio: endpoint `GET /api/estatisticas` no backend, com o `COUNT(*)` feito em SQL (código no fork) | 2   |
-| 9  | Desafio: frontend mostra o total, e o valor bate certo com a BD (print 7 + código no fork)       | 2       |
-| 10 | Commit do desafio com mensagem clara, feito pelo aluno, no fork                                  | 1       |
-| 11 | Prints legíveis, com os nomes pedidos e o utilizador do aluno visível nos terminais              | 1       |
-|    | **Total**                                                                                        | **20**  |
-
 > [!CAUTION]
-> Prints sem o teu utilizador visível, ou iguais aos de um colega, valem **0** nesse critério. O link tem de ser do **teu** fork, não do repositório do professor.
+> Prints sem o teu utilizador visível, ou iguais aos de um colega, **não são aceites**. O link tem de ser do **teu** fork, não do repositório do professor.
 
 ---
 
