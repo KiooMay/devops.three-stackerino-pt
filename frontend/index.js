@@ -5,10 +5,8 @@ const app = express()
 app.use(express.urlencoded({ extended: false }))
 
 const port = process.env.PORT || 3000
-// ONDE está o backend? Esta é a variável mais importante do frontend!
 const backendUrl = process.env.BACKEND_URL || "http://localhost:5500"
 
-// Evita que alguém injete HTML/JavaScript através de uma mensagem
 const escapar = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c])
 
@@ -22,55 +20,56 @@ const pagina = (corpo) => `
   </html>
 `
 
-app.get("/", async (req, res) => {
-  let response
+app.get("/", async (_req, res) => {
   try {
-    // O servidor FRONTEND chama o servidor BACKEND (chamada entre serviços)
-    response = await fetch(`${backendUrl}/api/mensagens`)
+    // 1. Obter mensagens
+    const response = await fetch(`${backendUrl}/api/mensagens`)
+    const data = await response.json()
+
+    // 2. Obter estatísticas (DESAFIO)
+    const respEstat = await fetch(`${backendUrl}/api/estatisticas`)
+    const estatisticas = await respEstat.json()
+    const total = estatisticas.total_mensagens || 0
+
+    if (!response.ok) {
+      console.error(`O backend respondeu ${response.status}:`, data.detalhe)
+      return res.status(502).send(pagina(`
+        <h1>🟠 O backend responde, mas a base de dados não</h1>
+        <p>Frontend ✅ → Backend ✅ → Base de dados ❌</p>
+        <p>Erro: <code>${escapar(data.detalhe || data.erro)}</code></p>
+        <p>Verifica: o PostgreSQL está a correr? As variáveis <code>DB_*</code> do backend estão certas?</p>
+      `))
+    }
+
+    const lista = (data.mensagens || [])
+      .map((m) => `<li><b>${escapar(m.autor)}</b>: ${escapar(m.texto)} <small>(${m.criada_em})</small></li>`)
+      .join("")
+
+    res.send(pagina(`
+      <h1>🖥️ Mural do Three-Stackerino</h1>
+      <p>Frontend ✅ → Backend ✅ → Base de dados ✅</p>
+      <h2>Total de mensagens: ${total}</h2>
+      <form method="POST" action="/mensagens" style="background: #eef; padding: 16px; border-radius: 8px;">
+        <input name="autor" placeholder="O teu nome" maxlength="50" required>
+        <input name="texto" placeholder="Escreve uma mensagem" maxlength="280" required size="35">
+        <button>Publicar</button>
+      </form>
+      <ul>${lista || "<li>Ainda não há mensagens.</li>"}</ul>
+      <p>Respondido pelo backend número <b>${escapar(data.backend_number)}</b>
+         (hostname <code>${escapar(data.backend_hostname)}</code>)</p>
+    `))
   } catch (err) {
     console.error(`Não foi possível contactar o backend em ${backendUrl}:`, err.message)
-    return res.status(502).send(pagina(`
-      <h1>😢 O frontend está ligado, mas o backend não responde</h1>
-      <p>Tentei chamar <code>${backendUrl}/api/mensagens</code> e falhei.</p>
-      <p>Erro: <code>${escapar(err.message)}</code></p>
-      <p>Verifica: o backend está a correr? O <code>BACKEND_URL</code> está certo?</p>
+    res.status(502).send(pagina(`
+      <h2>Erro no Frontend</h2>
+      <p>Não foi possível contactar o backend em <code>${escapar(backendUrl)}</code>.</p>
+      <p><small>${escapar(err.message)}</small></p>
     `))
   }
-
-  const data = await response.json()
-
-  if (!response.ok) {
-    // O backend respondeu, mas foi a BASE DE DADOS que falhou
-    console.error(`O backend respondeu ${response.status}:`, data.detalhe)
-    return res.status(502).send(pagina(`
-      <h1>🟠 O backend responde, mas a base de dados não</h1>
-      <p>Frontend ✅ → Backend ✅ → Base de dados ❌</p>
-      <p>Erro: <code>${escapar(data.detalhe || data.erro)}</code></p>
-      <p>Verifica: o PostgreSQL está a correr? As variáveis <code>DB_*</code> do backend estão certas? Correste o <code>db/init.sql</code>?</p>
-    `))
-  }
-
-  const lista = data.mensagens
-    .map((m) => `<li><b>${escapar(m.autor)}</b>: ${escapar(m.texto)} <small>(${m.criada_em})</small></li>`)
-    .join("")
-
-  res.send(pagina(`
-    <h1>🖥️ Mural do Three-Stackerino</h1>
-    <p>Frontend ✅ → Backend ✅ → Base de dados ✅</p>
-    <form method="POST" action="/mensagens" style="background: #eef; padding: 16px; border-radius: 8px;">
-      <input name="autor" placeholder="O teu nome" maxlength="50" required>
-      <input name="texto" placeholder="Escreve uma mensagem" maxlength="280" required size="35">
-      <button>Publicar</button>
-    </form>
-    <ul>${lista || "<li>Ainda não há mensagens.</li>"}</ul>
-    <p>Respondido pelo backend número <b>${escapar(data.backend_number)}</b>
-       (hostname <code>${escapar(data.backend_hostname)}</code>)</p>
-  `))
 })
 
 app.post("/mensagens", async (req, res) => {
   try {
-    // O frontend envia a mensagem ao backend em JSON. O backend guarda-a na base de dados.
     const response = await fetch(`${backendUrl}/api/mensagens`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -83,7 +82,7 @@ app.post("/mensagens", async (req, res) => {
   res.redirect("/")
 })
 
-app.get("/healthcheck", (req, res) => {
+app.get("/healthcheck", (_req, res) => {
   res.status(200).send("O frontend funciona!")
 })
 

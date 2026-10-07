@@ -81,6 +81,16 @@ def healthcheck():
         return jsonify({"backend": "ok", "base_de_dados": "erro", "detalhe": str(err).strip()}), 503
 
 
+@app.get("/api/estatisticas")
+def obter_estatisticas():
+    try:
+        with ligar_bd() as conn:
+            (total,) = conn.execute("SELECT COUNT(*) FROM mensagens").fetchone()
+            return jsonify({"total_mensagens": total}), 200
+    except psycopg.Error as err:
+        return jsonify({"erro": str(err).strip()}), 500
+
+
 if __name__ == "__main__":
     # 0.0.0.0 = escutar em TODAS as placas de rede (necessário para outras máquinas chegarem cá)
     print(f"Backend {NUMBER} à escuta em http://0.0.0.0:{PORT}/api/mensagens")
